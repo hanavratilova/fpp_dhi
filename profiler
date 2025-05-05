@@ -1,0 +1,42 @@
+#packages
+library(dplyr)
+library(caret)
+library(rpart)
+library(rpart.plot)
+
+#data slicing
+set.seed(42)
+trainTestPartition <- createDataPartition(y = dt_fpp$Profile, p= 0.7, list = FALSE)
+fpp.training <- dt_fpp[trainTestPartition,]
+fpp.testing <- dt_fpp[-trainTestPartition,]
+
+#Training Decisions Trees
+set.seed(42)
+seeds = vector(mode='list',length=101)
+for (i in 1:100) seeds[[i]] = sample.int(1000,100)
+seeds[[101]] = sample.int(1000,1)
+
+trctrl <- trainControl(method = "repeatedcv", 
+                       number = 10, 
+                       repeats = 10,
+                       seeds = seeds)
+
+dtree_fit_information <- train(Profile ~., data = fpp.training, method = "rpart",
+                               parms = list(split = "information"),
+                               trControl=trctrl,
+                               tuneLength = 10)
+dtree_fit_information
+
+#prediction
+fpp.testing[1,]
+predict(dtree_fit_information, newdata = fpp.testing[1,])
+
+#test prediction
+test_pred_information <- predict(dtree_fit_information, newdata = fpp.testing)
+confusionMatrix(test_pred_information, as.factor(fpp.testing$Profile) )
+
+rpart_dtree_information <- rpart(Profile ~., data = fpp.training, 
+                                 parms = list(split = "information"),
+                                 cp = 0.004485257)
+# Visualize the decision tree with rpart.plot
+rpart.plot(rpart_dtree_information, box.palette="RdBu", shadow.col="gray", nn=TRUE, tweak=2)
