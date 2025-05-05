@@ -1,0 +1,136 @@
+#applying preprocessing functions separately
+set.seed(23)
+trainTestPartition<-createDataPartition(filtered_diet_cvd_cleanest$cvd, #the class label, caret ensures an even split of classes
+                                        p=0.7, #proportion of samples assigned to train
+                                        list=FALSE)
+str(trainTestPartition)
+
+training <- filtered_diet_cvd_cleanest[ trainTestPartition,] #take the corresponding rows for training
+testing  <- filtered_diet_cvd_cleanest[-trainTestPartition,] #take the corresponding rows for testing by removing training rows
+
+#logistic regression
+  ## profile 1
+lr_1 <- glm(cvd ~ profile1 + Energy + Energy_density + Animal_fat + Vegetable_fat + 
+    Protein + Carbohydrate + Cholesterol + Fat + Sodium + TFA + SFA +
+    Omega_3 + Omega_6 + MUFA + Free_sugar + Fibre +age_when_attended_assessment_centre_f21003_0_0 + sex_f31_0_0.Male +   smoking_status_f20116_0_0.Current + ipaq_activity_group_f22032_0_0.low + Waist.circumference...Instance.0 + body_mass_index_bmi_f21001_0_0 + townsend_quintiles.Q1, data = training, family = binomial)
+summary(lr_1)
+
+## profile 2 
+lr_2 <- glm(cvd ~ profile2 + Energy + Energy_density + Animal_fat + Vegetable_fat + 
+    Protein + Carbohydrate + Cholesterol + Fat + Sodium + TFA + SFA +
+    Omega_3 + Omega_6 + MUFA + Free_sugar + Fibre +age_when_attended_assessment_centre_f21003_0_0 + sex_f31_0_0.Male +   smoking_status_f20116_0_0.Current + ipaq_activity_group_f22032_0_0.low + Waist.circumference...Instance.0 + body_mass_index_bmi_f21001_0_0 + townsend_quintiles.Q1 , data = training, family = binomial)
+summary(lr_2)
+
+## profile 3
+lr_3 <- glm(cvd ~ profile3 + Energy + Energy_density + Animal_fat + Vegetable_fat + 
+    Protein + Carbohydrate + Cholesterol + Fat + Sodium + TFA + SFA +
+    Omega_3 + Omega_6 + MUFA + Free_sugar + Fibre +age_when_attended_assessment_centre_f21003_0_0 + sex_f31_0_0.Male +   smoking_status_f20116_0_0.Current + ipaq_activity_group_f22032_0_0.low + Waist.circumference...Instance.0 + body_mass_index_bmi_f21001_0_0 +townsend_quintiles.Q1 , data = training, family = binomial)
+summary(lr_3)
+
+  #linear discriminant analysis
+  ## profile 1
+lda_1 <- train(cvd ~ profile1 + Energy + Energy_density + Animal_fat + Vegetable_fat + 
+    Protein + Carbohydrate + Cholesterol + Fat + Sodium + TFA + SFA +
+    Omega_3 + Omega_6 + MUFA + Free_sugar + Fibre +age_when_attended_assessment_centre_f21003_0_0 + sex_f31_0_0.Male +   smoking_status_f20116_0_0.Current + ipaq_activity_group_f22032_0_0.low + Waist.circumference...Instance.0 + body_mass_index_bmi_f21001_0_0 +townsend_quintiles.Q1, 
+    data = training, 
+    method = "lda",
+    trControl = trctrl_repeated)
+
+
+## profile 2
+lda_2 <- train(cvd ~ profile2 + Energy + Energy_density + Animal_fat + Vegetable_fat + 
+    Protein + Carbohydrate + Cholesterol + Fat + Sodium + TFA + SFA +
+    Omega_3 + Omega_6 + MUFA + Free_sugar + Fibre +age_when_attended_assessment_centre_f21003_0_0 + sex_f31_0_0.Male +   smoking_status_f20116_0_0.Current + ipaq_activity_group_f22032_0_0.low + Waist.circumference...Instance.0 + body_mass_index_bmi_f21001_0_0 +townsend_quintiles.Q1, 
+    data = training, 
+    method = "lda",
+    trControl = trctrl_repeated)
+
+
+## profile 3
+lda_3 <- train(cvd ~ profile3 + Energy + Energy_density + Animal_fat + Vegetable_fat + 
+    Protein + Carbohydrate + Cholesterol + Fat + Sodium + TFA + SFA +
+    Omega_3 + Omega_6 + MUFA + Free_sugar + Fibre +age_when_attended_assessment_centre_f21003_0_0 + sex_f31_0_0.Male +   smoking_status_f20116_0_0.Current + ipaq_activity_group_f22032_0_0.low + Waist.circumference...Instance.0 + body_mass_index_bmi_f21001_0_0 +townsend_quintiles.Q1, 
+    data = training, 
+    method = "lda",
+    trControl = trctrl_repeated)
+
+  # Extract coefficients from the model
+coefficients1 <- lda_1$finalModel$scaling
+coefficients2 <- lda_2$finalModel$scaling
+coefficients3 <- lda_3$finalModel$scaling
+
+# Define the target decrease in CVD risk (1% decrease)
+target_decrease <- -0.01
+
+# Calculate the required change in nutrient intake
+# For simplicity, let's assume we are focusing on one nutrient at a time
+# For example, let's calculate the required change in Energy intake
+
+# Coefficient for Energy
+coef1_energy <- coefficients1["Energy", "LD1"]
+coef2_energy <- coefficients2["Energy", "LD1"]
+coef3_energy <- coefficients3["Energy", "LD1"]
+
+# Calculate the required change in Energy intake
+# Using the formula: change_in_nutrient = target_decrease / coef_nutrient
+required_change_energy1 <- target_decrease / coef1_energy
+required_change_energy2 <- target_decrease / coef2_energy
+required_change_energy3 <- target_decrease / coef3_energy
+
+# Calculate the required change in Protein intake
+coef1_protein <- coefficients1["Protein", "LD1"]
+coef2_protein <- coefficients2["Protein", "LD1"]
+coef3_protein <- coefficients3["Protein", "LD1"]
+
+required_change_protein1 <- target_decrease / coef1_protein
+required_change_protein2 <- target_decrease / coef2_protein
+required_change_protein3 <- target_decrease / coef3_protein
+
+# Calculate the required change in Carbohydrate intake
+coef1_carbohydrate <- coefficients1["Carbohydrate", "LD1"]
+coef2_carbohydrate <- coefficients2["Carbohydrate", "LD1"]
+coef3_carbohydrate <- coefficients3["Carbohydrate", "LD1"]
+required_change_carbohydrate1 <- target_decrease / coef1_carbohydrate
+required_change_carbohydrate2 <- target_decrease / coef2_carbohydrate
+required_change_carbohydrate3 <- target_decrease / coef3_carbohydrate
+
+# Calculate the required change in Fat intake
+coef1_fat <- coefficients1["Fat", "LD1"]
+coef2_fat <- coefficients2["Fat", "LD1"]
+coef3_fat <- coefficients3["Fat", "LD1"]
+required_change_fat1 <- target_decrease / coef1_fat
+required_change_fat2 <- target_decrease / coef2_fat
+required_change_fat3 <- target_decrease / coef3_fat
+
+
+# Calculate the required change in TFA intake
+coef1_tfa <- coefficients1["TFA", "LD1"]
+coef2_tfa <- coefficients2["TFA", "LD1"]
+coef3_tfa <- coefficients3["TFA", "LD1"]
+required_change_tfa1 <- target_decrease / coef1_tfa
+required_change_tfa2 <- target_decrease / coef2_tfa
+required_change_tfa3 <- target_decrease / coef3_tfa
+
+# Calculate the required change in SFA intake
+coef1_sfa <- coefficients1["SFA", "LD1"]
+coef2_sfa <- coefficients2["SFA", "LD1"]
+coef3_sfa <- coefficients3["SFA", "LD1"]
+required_change_sfa1 <- target_decrease / coef1_sfa
+required_change_sfa2 <- target_decrease / coef2_sfa
+required_change_sfa3 <- target_decrease / coef3_sfa
+
+# Calculate the required change in Omega 3 intake
+coef1_omega3 <- coefficients1["Omega_3", "LD1"]
+coef2_omega3 <- coefficients2["Omega_3", "LD1"]
+coef3_omega3 <- coefficients3["Omega_3", "LD1"]
+required_change_omega31 <- target_decrease / coef1_omega3
+required_change_omega32 <- target_decrease / coef2_omega3
+required_change_omega33 <- target_decrease / coef3_omega3
+
+# Calculate the required change in Omega 6 intake
+coef1_omega6 <- coefficients1["Omega_6", "LD1"]
+coef2_omega6 <- coefficients2["Omega_6", "LD1"]
+coef3_omega6 <- coefficients3["Omega_6", "LD1"]
+required_change_omega61 <- target_decrease / coef1_omega6
+required_change_omega62 <- target_decrease / coef2_omega6
+required_change_omega63 <- target_decrease / coef3_omega6
